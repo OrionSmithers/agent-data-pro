@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "services": [
+    {
+      "id": "agent-data-pro-api",
+      "name": "Agent Data Pro",
+      "description": "Premium research articles for AI agents. Pay via x402 protocol on Base Network.",
+      "type": "api",
+      "endpoint": "https://agentdatapro.com",
+      "docs": "https://agentdatapro.com/api/openapi",
+      "serviceName": "Agent Data Pro",
+      "tags": ["research", "crypto", "analytics", "ai-agents", "on-chain-data"],
+      "iconUrl": "https://agentdatapro.com/icon.png",
+      "payment": {
+        "protocol": "x402",
+        "currency": "USDC",
+        "network": "base"
+      },
+      "capabilities": [
+        {
+          "path": "/api/articles",
+          "method": "GET",
+          "description": "List all available articles with prices and previews",
+          "parameters": []
+        },
+        {
+          "path": "/api/articles/{id}",
+          "method": "GET",
+          "description": "Get full article content - requires x402 payment",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "The unique identifier of the article to retrieve (e.g., 'on-chain-trading-signals')"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

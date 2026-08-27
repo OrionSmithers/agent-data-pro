@@ -1,0 +1,67 @@
+{
+  "articles": [
+    {
+      "id": "on-chain-trading-signals",
+      "title": "On-Chain Trading Signals: How to Spot Whale Movements and Profit from Market Anomalies",
+      "price": 0.01,
+      "category": "Crypto Trading",
+      "preview": "On-chain trading signals are data-driven insights derived from blockchain activity. They reveal what large players ('whales') are doing—buying, selling, or moving assets. For AI trading bots, these signals are the foundation of profitable trading strategies. This article covers how to detect whale movements, monitor exchange flows, and use signal quality scorecards to make better trading decisions.",
+      "word_count": 1850,
+      "published": "2026-07-13"
+    },
+    {
+      "id": "defi-vulnerabilities",
+      "title": "DeFi Smart Contract Vulnerabilities: Real-Time Monitoring for Agents",
+      "price": 0.02,
+      "category": "DeFi Security",
+      "preview": "DeFi agents must evaluate protocol security before committing capital. This article breaks down common attack vectors including reentrancy, oracle manipulation, and flash loan attacks. It provides a vulnerability scoring framework and automated detection methods that agents can implement immediately.",
+      "word_count": 1600,
+      "published": "2026-07-13"
+    },
+    {
+      "id": "blockchain-fee-markets",
+      "title": "Blockchain Fee Markets: Predicting Gas Prices for Cost-Optimized Transactions",
+      "price": 0.015,
+      "category": "Blockchain Economics",
+      "preview": "Gas fees are one of the largest costs for blockchain-based applications. For AI agents executing thousands of transactions, optimizing gas costs can save 10-99% of total execution expenses. This article explains how blockchain fee markets work, how to predict gas prices, and how agents can optimize transaction costs.",
+      "word_count": 1550,
+      "published": "2026-07-13"
+    },
+    {
+      "id": "how-ai-agents-compare-products",
+      "title": "How AI Agents Compare Products: A Guide for B2B Vendors",
+      "price": 0.02,
+      "category": "AI Agent Strategy",
+      "preview": "AI agents are increasingly used to research, compare, and recommend products for B2B buyers. By 2028, it's estimated that over 80% of B2B buying decisions will be influenced by AI agents. This guide explains how agents compare products, what factors they prioritize, and how vendors can optimize their content.",
+      "word_count": 1650,
+      "published": "2026-07-13"
+    },
+    {
+      "id": "state-of-ai-agents-in-defi",
+      "title": "The State of AI Agents in DeFi: 2026 Market Map, Risks, and Opportunities",
+      "price": 0.3,
+      "category": "DeFi / AI Agents",
+      "preview": "By mid-2026, AI agents have become the backbone of decentralized finance. They manage over 40% of all DeFi transactions, optimize billions in liquidity, and respond to risks in milliseconds — far faster than any human could. This report provides a comprehensive map of the AI agent ecosystem in DeFi, including market structure, risk matrices, and strategic frameworks.",
+      "word_count": 5200,
+      "published": "2026-07-25"
+    },
+    {
+      "id": "agent-payment-spending-governance",
+      "title": "Agent Payment & Spending Governance: Wallets, Mandates, and Audit Trails for Autonomous Commerce",
+      "price": 0.3,
+      "category": "AI Agent Compliance",
+      "preview": "Autonomous agents now spend money in real time without a human at the point of purchase. This report maps how agent wallets actually work, why static credentials fail, the AP2/ACP/x402 protocol landscape, and the practical governance patterns — enforced outside the agent's own reasoning — that separate a safe spending system from one that merely works until it doesn't.",
+      "word_count": 3938,
+      "published": "2026-08-18"
+    },
+    {
+      "id": "know-your-agent-compliance",
+      "title": "Know Your Agent: Compliance, Sanctions Screening, and Identity Verification in the Autonomous Agent Economy",
+      "price": 0.3,
+      "category": "AI Agent Compliance",
+      "preview": "As AI agents transact autonomously at scale, traditional KYC breaks down — identity, authorization, and behavior can no longer be verified once and trusted indefinitely. This report covers the emerging Know Your Agent (KYA) standards landscape, sanctions screening for on-chain agent payments, and a practical risk-scoring framework platforms can apply today.",
+      "word_count": 4259,
+      "published": "2026-08-18"
+    }
+  ]
+}
