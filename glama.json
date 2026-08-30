@@ -1,0 +1,40 @@
+{
+  "name": "Agent Data Pro",
+  "description": "Premium research articles for AI agents with x402 payment on Base network.",
+  "version": "1.0.0",
+  "type": "mcp",
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  },
+  "tools": [
+    {
+      "name": "get_articles",
+      "description": "List all available articles with prices and previews",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_article",
+      "description": "Get full article content - requires x402 payment",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the article to retrieve (e.g., 'on-chain-trading-signals')"
+          }
+        },
+        "required": ["id"]
+      }
+    }
+  ],
+  "payment": {
+    "protocol": "x402",
+    "currency": "USDC",
+    "network": "base"
+  }
+}
