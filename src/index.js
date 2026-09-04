@@ -172,6 +172,24 @@ app.onError((error, c) => {
 });
 
 // ============================================================
+// GLAMA DOMAIN VERIFICATION (.well-known/glama.json)
+// ============================================================
+
+app.get("/.well-known/glama.json", async (c) => {
+  return c.json({
+    name: "Agent Data Pro",
+    description: "Premium research articles for AI agents with x402 payment on Base network.",
+    repository: "https://github.com/OrionSmithers/agent-data-pro",
+    maintainers: [
+      {
+        name: "OrionSmithers",
+        email: "degrees2@yandex.com"
+      }
+    ]
+  });
+});
+
+// ============================================================
 // PUBLIC ARTICLE CATALOGUE
 // ============================================================
 
@@ -189,10 +207,6 @@ app.get("/index.json", async (c) => {
   return c.body(await index.arrayBuffer());
 });
 
-// ============================================================
-// PUBLIC MCP DISCOVERY
-// ============================================================
-
 app.get("/mcp.json", async (c) => {
   const mcp = await c.env.ASSETS.fetch(
     new Request("https://internal/mcp.json")
@@ -205,6 +219,161 @@ app.get("/mcp.json", async (c) => {
   c.header("Content-Type", "application/json");
 
   return c.body(await mcp.arrayBuffer());
+});
+
+// ============================================================
+// ICON ROUTES
+// ============================================================
+
+app.get("/icon-128.png", async (c) => {
+  const icon = await c.env.ASSETS.fetch(
+    new Request("https://internal/icon-128.png")
+  );
+  if (!icon.ok) {
+    return c.json({ error: "Not Found" }, 404);
+  }
+  c.header("Content-Type", "image/png");
+  return c.body(await icon.arrayBuffer());
+});
+
+app.get("/icon-64.png", async (c) => {
+  const icon = await c.env.ASSETS.fetch(
+    new Request("https://internal/icon-64.png")
+  );
+  if (!icon.ok) {
+    return c.json({ error: "Not Found" }, 404);
+  }
+  c.header("Content-Type", "image/png");
+  return c.body(await icon.arrayBuffer());
+});
+
+// ============================================================
+// MCP PROTOCOL ENDPOINT
+// ============================================================
+
+app.post("/mcp", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { jsonrpc, id, method, params } = body;
+
+    // Initialize request
+    if (method === "initialize") {
+      return c.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          protocolVersion: "2024-11-05",
+          capabilities: {
+            tools: {}
+          },
+          serverInfo: {
+            name: "Agent Data Pro",
+            version: "1.0.0"
+          }
+        }
+      });
+    }
+
+    // Tools list request
+    if (method === "tools/list") {
+      const indexResponse = await c.env.ASSETS.fetch(
+        new Request("https://internal/index.json")
+      );
+      const index = await indexResponse.json();
+
+      const tools = index.articles.map(article => ({
+        name: `get_article_${article.id}`,
+        description: article.title,
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: `Article ID: ${article.id}`
+            }
+          },
+          required: ["id"]
+        }
+      }));
+
+      tools.push({
+        name: "list_articles",
+        description: "List all available articles with prices and previews",
+        inputSchema: {
+          type: "object",
+          properties: {}
+        }
+      });
+
+      return c.json({
+        jsonrpc: "2.0",
+        id,
+        result: { tools }
+      });
+    }
+
+    // Tools call request
+    if (method === "tools/call") {
+      const { name, arguments: args } = params;
+
+      if (name === "list_articles") {
+        const indexResponse = await c.env.ASSETS.fetch(
+          new Request("https://internal/index.json")
+        );
+        const index = await indexResponse.json();
+        return c.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(index.articles, null, 2)
+              }
+            ]
+          }
+        });
+      }
+
+      if (name.startsWith("get_article_")) {
+        const articleId = name.replace("get_article_", "");
+        const content = await c.env.ARTICLE_CONTENT.get(articleId);
+        if (content) {
+          return c.json({
+            jsonrpc: "2.0",
+            id,
+            result: {
+              content: [
+                {
+                  type: "text",
+                  text: content
+                }
+              ]
+            }
+          });
+        }
+      }
+
+      return c.json({
+        jsonrpc: "2.0",
+        id,
+        error: { code: -32602, message: "Invalid tool call" }
+      });
+    }
+
+    // Unknown method
+    return c.json({
+      jsonrpc: "2.0",
+      id,
+      error: { code: -32601, message: "Method not found" }
+    });
+  } catch (error) {
+    return c.json({
+      jsonrpc: "2.0",
+      id: null,
+      error: { code: -32700, message: "Parse error" }
+    });
+  }
 });
 
 // ============================================================
@@ -229,10 +398,6 @@ app.get("/api/articles", async (c) => {
 
   return c.body(await index.arrayBuffer());
 });
-
-// ============================================================
-// PUBLIC OPENAPI DESCRIPTION
-// ============================================================
 
 app.get("/api/openapi", (c) => {
   return c.json({
@@ -358,9 +523,20 @@ async function buildDynamicRoutes(env) {
         payTo: PAY_TO,
         asset: USDC_BASE,
       },
-
-      description:
-        article.title || `Agent Data Pro article ${article.id}`,
+      description: article.title || `Agent Data Pro article ${article.id}`,
+      extensions: {
+        bazaar: {
+          info: {
+            input: {
+              type: "http",
+              method: "GET"
+            },
+            output: {
+              type: "json"
+            }
+          }
+        }
+      }
     };
   }
 
@@ -391,10 +567,7 @@ app.use("/api/articles/*", async (c, next) => {
   }
 
   // ============================================================
-  // RATE LIMITER - Applied before x402 payment check
-  // Only counts unpaid requests (before payment verification)
-  // Key = article path only (no IP address)
-  // 100 requests per 60 seconds per article
+  // RATE LIMITER
   // ============================================================
 
   const id = c.req.param("id");
@@ -419,9 +592,9 @@ app.use("/api/articles/*", async (c, next) => {
     );
   }
 
-  // ----------------------------------------------------------
+  // ============================================================
   // x402 Payment Middleware
-  // ----------------------------------------------------------
+  // ============================================================
 
   if (!x402Initialized) {
     console.log("AGENTDATA_X402_INIT: starting");
@@ -455,9 +628,6 @@ app.use("/api/articles/*", async (c, next) => {
     false
   );
 
-  // IMPORTANT:
-  // Return the middleware result so Hono receives
-  // the Response generated by x402.
   return middleware(c, next);
 });
 
