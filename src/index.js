@@ -248,6 +248,47 @@ app.get("/icon-64.png", async (c) => {
 });
 
 // ============================================================
+// CRYPTO PRICE UTILITY ENDPOINT (JSON API)
+// ============================================================
+
+app.get("/api/price/:symbol", async (c) => {
+  const symbol = c.req.param("symbol").toUpperCase();
+
+  try {
+    const response = await fetch(`https://cryptorates.ai/v1/get/${symbol}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return c.json({ error: `Coin symbol "${symbol}" not found` }, 404);
+      }
+      throw new Error(`API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return c.json({
+      symbol: data.symbol,
+      name: data.name,
+      rank: data.rank,
+      price: data.price,
+      volume24h: data.volume24h,
+      marketcap: data.marketcap,
+      supply: data.supply,
+      change24h: data.change24h * 100,
+      change7d: data.change7d * 100,
+      lastUpdated: new Date(data.updated * 1000).toISOString(),
+      attribution: "Data provided by https://cryptorates.ai"
+    });
+
+  } catch (error) {
+    console.error("Crypto price error:", error);
+    return c.json({
+      error: "Failed to fetch price data"
+    }, 500);
+  }
+});
+
+// ============================================================
 // MCP PROTOCOL ENDPOINT
 // ============================================================
 
@@ -256,7 +297,6 @@ app.post("/mcp", async (c) => {
     const body = await c.req.json();
     const { jsonrpc, id, method, params } = body;
 
-    // Initialize request
     if (method === "initialize") {
       return c.json({
         jsonrpc: "2.0",
@@ -274,7 +314,6 @@ app.post("/mcp", async (c) => {
       });
     }
 
-    // Tools list request
     if (method === "tools/list") {
       const indexResponse = await c.env.ASSETS.fetch(
         new Request("https://internal/index.json")
@@ -305,6 +344,21 @@ app.post("/mcp", async (c) => {
         }
       });
 
+      tools.push({
+        name: "get_crypto_price",
+        description: "Get the current price of a cryptocurrency (BTC, ETH, SOL, etc.) from cryptorates.ai",
+        inputSchema: {
+          type: "object",
+          properties: {
+            symbol: {
+              type: "string",
+              description: "The cryptocurrency symbol (e.g., BTC, ETH, SOL, DOGE)"
+            }
+          },
+          required: ["symbol"]
+        }
+      });
+
       return c.json({
         jsonrpc: "2.0",
         id,
@@ -312,7 +366,6 @@ app.post("/mcp", async (c) => {
       });
     }
 
-    // Tools call request
     if (method === "tools/call") {
       const { name, arguments: args } = params;
 
@@ -335,6 +388,87 @@ app.post("/mcp", async (c) => {
         });
       }
 
+      if (name === "get_crypto_price") {
+        const symbol = args?.symbol?.toUpperCase();
+        if (!symbol) {
+          return c.json({
+            jsonrpc: "2.0",
+            id,
+            error: { code: -32602, message: "Missing required parameter: symbol" }
+          });
+        }
+
+        // ============================================================
+        // RATE LIMITER FOR CRYPTO PRICE TOOL
+        // ============================================================
+
+        try {
+          const rateResult = await c.env.CRYPTO_RATE_LIMITER.limit({ 
+            key: "get_crypto_price" 
+          });
+          
+          if (!rateResult.success) {
+            console.warn("AGENTDATA_CRYPTO_RATE_LIMITED");
+            return c.json({
+              jsonrpc: "2.0",
+              id,
+              error: {
+                code: -32000,
+                message: "Rate limit exceeded. Please slow down your requests."
+              }
+            });
+          }
+        } catch (rateError) {
+          console.error("CRYPTO_RATE_LIMITER_ERROR:", rateError.message);
+        }
+
+        try {
+          const response = await fetch(`https://cryptorates.ai/v1/get/${symbol}`);
+          if (!response.ok) {
+            if (response.status === 404) {
+              return c.json({
+                jsonrpc: "2.0",
+                id,
+                error: { code: -32602, message: `Coin symbol "${symbol}" not found` }
+              });
+            }
+            throw new Error(`API returned ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          const resultText = `**${symbol} Price**\n\n` +
+            `Price: $${data.price.toFixed(4)}\n` +
+            `Name: ${data.name}\n` +
+            `Rank: #${data.rank}\n` +
+            `Market Cap: $${(data.marketcap / 1e9).toFixed(2)}B\n` +
+            `24h Volume: $${(data.volume24h / 1e9).toFixed(2)}B\n` +
+            `24h Change: ${(data.change24h * 100).toFixed(2)}%\n` +
+            `7d Change: ${(data.change7d * 100).toFixed(2)}%\n\n` +
+            `Data provided by https://cryptorates.ai`;
+
+          return c.json({
+            jsonrpc: "2.0",
+            id,
+            result: {
+              content: [
+                {
+                  type: "text",
+                  text: resultText
+                }
+              ]
+            }
+          });
+        } catch (error) {
+          console.error("Crypto price error:", error);
+          return c.json({
+            jsonrpc: "2.0",
+            id,
+            error: { code: -32603, message: "Failed to fetch crypto price data" }
+          });
+        }
+      }
+
       if (name.startsWith("get_article_")) {
         const articleId = name.replace("get_article_", "");
         const content = await c.env.ARTICLE_CONTENT.get(articleId);
@@ -352,6 +486,11 @@ app.post("/mcp", async (c) => {
             }
           });
         }
+        return c.json({
+          jsonrpc: "2.0",
+          id,
+          error: { code: -32602, message: "Article not found" }
+        });
       }
 
       return c.json({
@@ -361,7 +500,6 @@ app.post("/mcp", async (c) => {
       });
     }
 
-    // Unknown method
     return c.json({
       jsonrpc: "2.0",
       id,
@@ -473,6 +611,38 @@ app.get("/api/openapi", (c) => {
           },
         },
       },
+
+      "/api/price/{symbol}": {
+        get: {
+          summary: "Get cryptocurrency price",
+          description:
+            "Get the current price of a cryptocurrency (BTC, ETH, SOL, etc.) from cryptorates.ai. Free endpoint (no payment required).",
+
+          parameters: [
+            {
+              name: "symbol",
+              in: "path",
+              required: true,
+              schema: {
+                type: "string",
+              },
+              description: "The cryptocurrency symbol (e.g., BTC, ETH, SOL)",
+            },
+          ],
+
+          responses: {
+            "200": {
+              description: "Cryptocurrency price data",
+              content: {
+                "application/json": {},
+              },
+            },
+            "404": {
+              description: "Symbol not found",
+            },
+          },
+        },
+      },
     },
   });
 });
@@ -540,6 +710,31 @@ async function buildDynamicRoutes(env) {
     };
   }
 
+  // Crypto price endpoint route - FREE (no payment required)
+  routes["GET /api/price/:symbol"] = {
+    accepts: {
+      scheme: "exact",
+      price: "$0.001",
+      network: "eip155:8453",
+      payTo: PAY_TO,
+      asset: USDC_BASE,
+    },
+    description: "Get current cryptocurrency price from cryptorates.ai",
+    extensions: {
+      bazaar: {
+        info: {
+          input: {
+            type: "http",
+            method: "GET"
+          },
+          output: {
+            type: "json"
+          }
+        }
+      }
+    }
+  };
+
   console.log(
     "AGENTDATA_DYNAMIC_X402_ROUTES",
     JSON.stringify({
@@ -557,18 +752,17 @@ async function buildDynamicRoutes(env) {
 
 let x402Initialized = false;
 
-app.use("/api/articles/*", async (c, next) => {
-  // Do not interfere with the public catalogue endpoint.
+app.use("/api/*", async (c, next) => {
+  if (c.req.path === "/api/price" || c.req.path.startsWith("/api/price/")) {
+    return next();
+  }
+
   if (
     c.req.path === "/api/articles" ||
     c.req.path === "/api/articles/"
   ) {
     return next();
   }
-
-  // ============================================================
-  // RATE LIMITER
-  // ============================================================
 
   const id = c.req.param("id");
   const rateLimitKey = `/api/articles/${id}`;
@@ -591,10 +785,6 @@ app.use("/api/articles/*", async (c, next) => {
       429
     );
   }
-
-  // ============================================================
-  // x402 Payment Middleware
-  // ============================================================
 
   if (!x402Initialized) {
     console.log("AGENTDATA_X402_INIT: starting");
@@ -638,10 +828,6 @@ app.use("/api/articles/*", async (c, next) => {
 app.get("/api/articles/:id", async (c) => {
   const id = c.req.param("id");
 
-  // ----------------------------------------------------------
-  // Load public catalogue
-  // ----------------------------------------------------------
-
   const indexResponse = await c.env.ASSETS.fetch(
     new Request("https://internal/index.json")
   );
@@ -682,10 +868,6 @@ app.get("/api/articles/:id", async (c) => {
     );
   }
 
-  // ----------------------------------------------------------
-  // Find article
-  // ----------------------------------------------------------
-
   const articleInfo = index.articles.find(
     (article) => article.id === id
   );
@@ -699,10 +881,6 @@ app.get("/api/articles/:id", async (c) => {
     );
   }
 
-  // ----------------------------------------------------------
-  // Retrieve premium content from private KV
-  // ----------------------------------------------------------
-
   const content =
     await c.env.ARTICLE_CONTENT.get(id);
 
@@ -714,10 +892,6 @@ app.get("/api/articles/:id", async (c) => {
       404
     );
   }
-
-  // ----------------------------------------------------------
-  // Return paid article
-  // ----------------------------------------------------------
 
   return c.json({
     articleId: id,
