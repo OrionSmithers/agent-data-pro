@@ -4,9 +4,12 @@
     "OrionSmithers"
   ],
   "relatedServers": [
-    "@anthropics/mcp-server-fetch",
-    "@anthropics/mcp-server-filesystem",
-    "@modelcontextprotocol/server-memory"
+    "pay-mcp",
+    "hyperd-mcp",
+    "Lucy — AI Agent for Hire",
+    "WebLens MCP Server",
+    "BlueAgent x402 Services",
+    "x402 MCP Payment"
   ],
   "name": "Agent Data Pro",
   "description": "Premium research articles for AI agents with x402 payment on Base network.",
