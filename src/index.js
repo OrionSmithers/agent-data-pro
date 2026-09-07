@@ -322,13 +322,13 @@ app.post("/mcp", async (c) => {
 
       const tools = index.articles.map(article => ({
         name: `get_article_${article.id}`,
-        description: article.title,
+        description: `[x402 Payment Required] ${article.title} — Premium research article for AI agents. Returns full content with analysis, data, and actionable insights. Price: $${article.price} USDC. Requires x402 payment on Base network.`,
         inputSchema: {
           type: "object",
           properties: {
             id: {
               type: "string",
-              description: `Article ID: ${article.id}`
+              description: `Article ID: ${article.id} — use this to retrieve the full article content`
             }
           },
           required: ["id"]
@@ -337,7 +337,7 @@ app.post("/mcp", async (c) => {
 
       tools.push({
         name: "list_articles",
-        description: "List all available articles with prices and previews",
+        description: "List all available premium research articles with their prices, categories, and previews. Free to call — no payment required.",
         inputSchema: {
           type: "object",
           properties: {}
@@ -346,13 +346,13 @@ app.post("/mcp", async (c) => {
 
       tools.push({
         name: "get_crypto_price",
-        description: "Get the current price of a cryptocurrency (BTC, ETH, SOL, etc.) from cryptorates.ai",
+        description: "Fetch current cryptocurrency price data including USD price, 24h change, 7d change, market cap, and 24h volume. Supports 5000+ coins including BTC, ETH, SOL, DOGE, XRP, ADA, AVAX, MATIC, and more. Data updates every 5 minutes from cryptorates.ai. Rate-limited to 30 requests per 60 seconds.",
         inputSchema: {
           type: "object",
           properties: {
             symbol: {
               type: "string",
-              description: "The cryptocurrency symbol (e.g., BTC, ETH, SOL, DOGE)"
+              description: "Cryptocurrency symbol (uppercase). Examples: BTC, ETH, SOL, DOGE, XRP, ADA, AVAX, MATIC, DOT, LINK, UNI, ATOM, FTM, NEAR, ALGO, VET, ICP, FIL, EGLD, THETA, XTZ, RUNE, CRO, KCS, HNT, MKR, AAVE, SNX, CRV, CAKE, SUSHI, UST, LUNC, etc."
             }
           },
           required: ["symbol"]
