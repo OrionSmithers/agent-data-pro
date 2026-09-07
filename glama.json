@@ -1,5 +1,8 @@
 {
-  "_comment": "Trigger Glama scan",
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "OrionSmithers"
+  ],
   "name": "Agent Data Pro",
   "description": "Premium research articles for AI agents with x402 payment on Base network.",
   "version": "1.0.0",
@@ -31,6 +34,20 @@
         },
         "required": ["id"]
       }
+    },
+    {
+      "name": "get_crypto_price",
+      "description": "Get the current price of a cryptocurrency (BTC, ETH, SOL, etc.)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "The cryptocurrency symbol (e.g., BTC, ETH, SOL, DOGE)"
+          }
+        },
+        "required": ["symbol"]
+      }
     }
   ],
   "payment": {
@@ -38,4 +55,4 @@
     "currency": "USDC",
     "network": "base"
   }
-}       
+}
