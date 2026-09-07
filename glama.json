@@ -3,6 +3,11 @@
   "maintainers": [
     "OrionSmithers"
   ],
+  "relatedServers": [
+    "@anthropics/mcp-server-fetch",
+    "@anthropics/mcp-server-filesystem",
+    "@modelcontextprotocol/server-memory"
+  ],
   "name": "Agent Data Pro",
   "description": "Premium research articles for AI agents with x402 payment on Base network.",
   "version": "1.0.0",
