@@ -14,8 +14,8 @@
   },
   "tools": [
     {
-      "name": "get_articles",
-      "description": "List all available articles with prices and previews",
+      "name": "list_articles",
+      "description": "List all available premium research articles with prices and previews. Free to call — no payment required.",
       "inputSchema": {
         "type": "object",
         "properties": {}
@@ -23,13 +23,13 @@
     },
     {
       "name": "get_article",
-      "description": "Get full article content - requires x402 payment",
+      "description": "Retrieve full article content (requires x402 payment). Call list_articles first to get valid article IDs.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "The unique identifier of the article to retrieve (e.g., 'on-chain-trading-signals')"
+            "description": "The article ID to retrieve (e.g., 'on-chain-trading-signals', 'defi-vulnerabilities')."
           }
         },
         "required": ["id"]
@@ -37,13 +37,13 @@
     },
     {
       "name": "get_crypto_price",
-      "description": "Get the current price of a cryptocurrency (BTC, ETH, SOL, etc.)",
+      "description": "Fetch current cryptocurrency price data including price, 24h change, market cap, and volume.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "symbol": {
             "type": "string",
-            "description": "The cryptocurrency symbol (e.g., BTC, ETH, SOL, DOGE)"
+            "description": "Cryptocurrency symbol (e.g., BTC, ETH, SOL)."
           }
         },
         "required": ["symbol"]
