@@ -315,32 +315,29 @@ app.post("/mcp", async (c) => {
     }
 
     if (method === "tools/list") {
-      const indexResponse = await c.env.ASSETS.fetch(
-        new Request("https://internal/index.json")
-      );
-      const index = await indexResponse.json();
+      const tools = [];
 
-      const tools = index.articles.map(article => ({
-        name: `get_article_${article.id}`,
-        description: `[x402 Payment Required] ${article.title} — Premium research article for AI agents. Returns full content with analysis, data, and actionable insights. Price: $${article.price} USDC. Requires x402 payment on Base network.`,
+      tools.push({
+        name: "list_articles",
+        description: "List all available premium research articles with their prices, categories, and previews. Free to call — no payment required. Use this first to discover available article IDs.",
+        inputSchema: {
+          type: "object",
+          properties: {}
+        }
+      });
+
+      tools.push({
+        name: "get_article",
+        description: "[x402 Payment Required] Retrieve the full content of a premium research article on Blockchain, DeFi, or Crypto Markets. Returns analysis, data, and actionable insights. Price varies by article ($0.01–$0.30 USDC). Requires x402 payment on Base network. Call list_articles first to get valid article IDs.",
         inputSchema: {
           type: "object",
           properties: {
             id: {
               type: "string",
-              description: `Article ID: ${article.id} — use this to retrieve the full article content`
+              description: "The article ID to retrieve (e.g., 'on-chain-trading-signals', 'defi-vulnerabilities', 'know-your-agent-compliance'). Use list_articles to discover available IDs."
             }
           },
           required: ["id"]
-        }
-      }));
-
-      tools.push({
-        name: "list_articles",
-        description: "List all available premium research articles with their prices, categories, and previews. Free to call — no payment required.",
-        inputSchema: {
-          type: "object",
-          properties: {}
         }
       });
 
@@ -469,8 +466,16 @@ app.post("/mcp", async (c) => {
         }
       }
 
-      if (name.startsWith("get_article_")) {
-        const articleId = name.replace("get_article_", "");
+      if (name === "get_article") {
+        const articleId = args?.id;
+        if (!articleId) {
+          return c.json({
+            jsonrpc: "2.0",
+            id,
+            error: { code: -32602, message: "Missing required parameter: id" }
+          });
+        }
+
         const content = await c.env.ARTICLE_CONTENT.get(articleId);
         if (content) {
           return c.json({
