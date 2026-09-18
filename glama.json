@@ -48,6 +48,25 @@
         },
         "required": ["symbol"]
       }
+    },
+    {
+      "name": "get_token_safety",
+      "description": "Check ERC-20 token safety on Base, Ethereum, or BSC (requires x402 payment). Returns risk score, verdict, and warnings including honeypot detection and taxes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "The ERC-20 token contract address (0x + 40 hex characters)."
+          },
+          "chain": {
+            "type": "string",
+            "description": "Chain ID: 8453 (Base, default), 1 (Ethereum), or 56 (BSC).",
+            "default": "8453"
+          }
+        },
+        "required": ["address"]
+      }
     }
   ],
   "payment": {
